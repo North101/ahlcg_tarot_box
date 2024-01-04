@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm"
+  viewBox="0 0 $width $height">
+  <path
+    d="$path"
+    fill="none" stroke="#000000" stroke-width="0.001mm" />
+  <!-- Outer tab-sized border -->
+  <g transform="translate(0.00, $thickness)">
+    <!-- Inner play -->
+    <g transform="translate(0.00, $play)">
+      <!-- Inner tab-sized border -->
+      <g transform="translate($thickness, $thickness)">
+        <g
+          transform="translate($icon_x, $icon_y)"
+          fill="#000000" stroke="none" stroke-width="0.001mm">
+          <g transform="scale($icon_scale)">
+            $icon
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

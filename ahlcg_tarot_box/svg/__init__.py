@@ -1,1 +1,2 @@
-from . import path
+from .attributes import *
+from .elements import *

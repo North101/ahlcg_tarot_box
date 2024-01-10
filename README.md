@@ -36,6 +36,9 @@ python3 -m ahlcg_tarot_box --help
 ### Default arguments
 
 ```bash
+# output directory
+--output = output/
+
 # width of the card (mm)
 --width = 123
 # height of card (mm)

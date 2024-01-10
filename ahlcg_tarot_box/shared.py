@@ -1,9 +1,7 @@
 from typing import NamedTuple, Protocol
-import os
 import pathlib
-from string import Template
 
-from .svg.path import *
+from .svg.elements.path import *
 
 
 class IconArgs(NamedTuple):
@@ -19,7 +17,6 @@ class MagnetArgs(NamedTuple):
 
 
 class SVGArgs(NamedTuple):
-  template: pathlib.Path
   output: pathlib.Path
   width: float
   height: float
@@ -66,7 +63,7 @@ class SVGArgs(NamedTuple):
     return d([
         d.h((self.tab / 2) + self.kerf),
         d.v(self.thickness),
-        d.h(-self.kerf + self.tab + -self.kerf),
+        d.h(self.tab + -self.kerf + -self.kerf),
         -d.v(self.thickness),
         d.h(self.kerf + (self.tab / 2)),
     ])
@@ -78,7 +75,7 @@ class SVGArgs(NamedTuple):
         -d.v(self.thickness),
         d.h(self.kerf + self.tab + self.kerf),
         d.v(self.thickness),
-        d.h(-self.kerf + (self.tab / 2)),
+        d.h((self.tab / 2) + -self.kerf),
     ])
 
   @property
@@ -90,7 +87,7 @@ class SVGArgs(NamedTuple):
     return d([
         d.v((self.tab / 2) + self.kerf),
         -d.h(self.thickness),
-        d.v(-self.kerf + self.tab + -self.kerf),
+        d.v(self.tab + -self.kerf + -self.kerf),
         d.h(self.thickness),
         d.v(self.kerf + (self.tab / 2)),
     ])
@@ -102,7 +99,7 @@ class SVGArgs(NamedTuple):
         d.h(self.thickness),
         d.v(self.kerf + self.tab + self.kerf),
         -d.h(self.thickness),
-        d.v(-self.kerf + (self.tab / 2)),
+        d.v((self.tab / 2) + -self.kerf),
     ])
 
 
@@ -124,36 +121,3 @@ def write_all_svg(args: SVGArgs):
       write_svg(args)
       for write_svg in svg_list
   ]
-
-
-class SVGTemplate:
-  def __init__(self, template: os.PathLike):
-    self.template = template
-
-  def __enter__(self):
-    return self
-
-  def __exit__(self, type, value, traceback):
-    return False
-
-  def read_template(self):
-    with open(self.template) as f:
-      return Template(f.read())
-
-  def write(self, __filename: os.PathLike, /, path: d, **kwargs):
-    template = self.read_template()
-
-    path = path.fill_placeholders
-    filename = pathlib.Path(__filename)
-    filename.parent.mkdir(parents=True, exist_ok=True)
-    with filename.open('w') as f:
-      f.write(
-          template.substitute(
-              dict(
-                  width=round(path.width, 2),
-                  height=round(path.height, 2),
-                  path=path,
-                  **kwargs,
-              )
-          )
-      )

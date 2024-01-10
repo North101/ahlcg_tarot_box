@@ -6,8 +6,6 @@ from .shared import *
 
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--template',
-                      type=pathlib.Path, default='template', help='template path')
   parser.add_argument('--output',
                       type=pathlib.Path, default='output', help='output path')
   parser.add_argument('--width',
@@ -59,7 +57,6 @@ def parse_args():
 def main():
   args = parse_args()
   svgs = write_all_svg(args=SVGArgs(
-      template=args.template,
       output=args.output,
       width=args.width + args.padding,
       height=args.height + args.padding,

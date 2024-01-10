@@ -1,6 +1,6 @@
 import pathlib
 
-from .svg.path import d, placeholder
+from .svg import *
 from .shared import *
 
 
@@ -35,7 +35,7 @@ def write_svg(args: SVGArgs):
       -placeholder(lambda w, h: d.v((args.depth - h) / 2)),
   ])
 
-  path = d([
+  p = d([
       d.m(0, 0),
       top_path,
       right_path,
@@ -44,12 +44,24 @@ def write_svg(args: SVGArgs):
       d.z(),
   ])
 
-  filename = pathlib.Path(__file__).with_suffix('.svg').name
-  with SVGTemplate(args.template / filename) as f:
-    f.write(
-        args.output / filename,
-        path=path,
-        thickness=args.thickness,
-    )
+  s = svg(
+      attrs=svg.attrs(
+          width=length(round(p.width, 2), 'mm'),
+          height=length(round(p.height, 2), 'mm'),
+          viewBox=(0, 0, round(p.width, 2), round(p.height, 2)),
+      ),
+      children=[
+          path(attrs=path.attrs(
+              d=p,
+              fill='none',
+              stroke='black',
+              stroke_width=0.001,
+          )),
+      ]
+  )
 
-  return args.output / filename, path.width, path.height
+  filename = args.output / pathlib.Path(__file__).with_suffix('.svg').name
+  with filename.open('w') as f:
+    f.write(str(s))
+
+  return filename, p.width, p.height

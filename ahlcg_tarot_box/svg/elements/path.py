@@ -1,5 +1,9 @@
+from dataclasses import dataclass
 from functools import reduce
 from typing import Callable
+
+from .core import Element
+from ..attributes import Attribute, CoreAttributes, StylingAttributes, PresentationAttributes
 
 
 class DrawSegment:
@@ -24,28 +28,28 @@ class DrawSegment:
     return self
 
 
-class d(DrawSegment):
+class d(Attribute[list[DrawSegment]], DrawSegment):
   sep = ' '
 
-  def __init__(self, values: list[DrawSegment]):
-    self.values = values
-
   def __str__(self):
-    values = (str(value) for value in self.flat_values)
-    return f'{self.sep.join(values)}'
+    value = (
+        str(value)
+        for value in self.flat_values
+    )
+    return f'{self.sep.join(value)}'
 
   def __add__(self, other: 'd'):
-    return d(self.values + other.values)
+    return d(self.value + other.value)
 
   def __sub__(self, other: 'd'):
     return self + -other
 
   def __neg__(self):
-    return d([-value for value in self.values])
+    return d([-value for value in self.value])
 
   @property
   def flat_values(self):
-    for value in self.values:
+    for value in self.value:
       if isinstance(value, d):
         yield from value.fill_placeholders.flat_values
       else:
@@ -89,13 +93,13 @@ class d(DrawSegment):
         value.fill_placeholders
         if isinstance(value, d) else
         value.placeholder(self.width, self.height)
-        for value in self.values
+        for value in self.value
     ])
 
   def placeholder(self, width: float, height: float) -> DrawSegment:
     return d([
         value.placeholder(width, height)
-        for value in self.values
+        for value in self.value
     ])
 
   class m(DrawSegment):
@@ -194,3 +198,14 @@ class placeholder(DrawSegment):
 
   def placeholder(self, width: float, height: float) -> DrawSegment:
     return self._remaining(width, height)
+
+
+@dataclass
+class PathAttributes(CoreAttributes, StylingAttributes, PresentationAttributes):
+  d: 'd | None' = None
+  pathLength: int | None = None
+
+
+class path(Element[PathAttributes]):
+  element = 'path'
+  attrs = PathAttributes

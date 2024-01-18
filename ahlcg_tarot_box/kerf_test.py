@@ -1,57 +1,52 @@
 import pathlib
 
-from .svg import *
+from pysvg import length, path, svg
+
 from .shared import *
 
 
 @register_svg
 def write_svg(args: SVGArgs):
-  tab_out = d([
-      d.m(0, 0),
-      d.h(10),
-      args.v_tab_half,
-      args.v_tab_out,
-      args.v_tab_out,
-      args.v_tab_half,
-      -d.h(10),
-      -placeholder(lambda w, h: d.v(h)),
+  tab_out = path.d([
+      path.d.m(0, 0),
+      path.d.h(10),
+      args.v_tab_half(args.tab),
+      args.v_tab(args.tab, True),
+      args.v_tab(args.tab, True),
+      args.v_tab_half(args.tab),
+      -path.d.h(10),
+      -path.placeholder(lambda w, h: path.d.v(h)),
   ])
 
-  tab_in = d([
-      d.m(10 + args.tab + 2, 0),
-      d.h(10),
-      args.v_tab_half,
-      args.v_tab_in,
-      args.v_tab_in,
-      args.v_tab_half,
-      -d.h(10),
-      -placeholder(lambda w, h: d.v(h)),
+  tab_in = path.d([
+      path.d.m(10 + args.tab + 2, 0),
+      path.d.h(10),
+      args.v_tab_half(args.tab),
+      args.v_tab(args.tab, False),
+      args.v_tab(args.tab, False),
+      args.v_tab_half(args.tab),
+      -path.d.h(10),
+      -path.placeholder(lambda w, h: path.d.v(h)),
   ])
 
-  p = d([
+  d = path.d([
       tab_out,
       tab_in,
-      d.z(),
+      path.d.z(),
   ])
 
   s = svg(
       attrs=svg.attrs(
-          width=length(round(p.width, 2), 'mm'),
-          height=length(round(p.height, 2), 'mm'),
-          viewBox=(0, 0, round(p.width, 2), round(p.height, 2)),
+          width=length(round(d.width, 2), 'mm'),
+          height=length(round(d.height, 2), 'mm'),
+          viewBox=(0, 0, round(d.width, 2), round(d.height, 2)),
       ),
       children=[
           path(attrs=path.attrs(
-              d=p,
-              fill='none',
-              stroke='black',
-              stroke_width=0.001,
-          )),
+              d=d,
+          ) | args.cut),
       ]
   )
 
   filename = args.output / pathlib.Path(__file__).with_suffix('.svg').name
-  with filename.open('w') as f:
-    f.write(str(s))
-
-  return filename, p.width, p.height
+  return filename, s

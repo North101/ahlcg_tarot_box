@@ -84,15 +84,15 @@ def main():
       ),
   ))
 
-  svgs = [
-      (str(svg[0]), f'{svg[1]:.2f}mm', f'{svg[2]:.2f}mm')
-      for svg in svgs
+  data = [
+      (str(filename), str(svg.attrs.width), str(svg.attrs.height))
+      for (filename, svg) in svgs
   ]
-  name_len = max(len(svg[0]) for svg in svgs)
-  width_len = max(len(svg[1]) for svg in svgs)
-  height_len = max(len(svg[2]) for svg in svgs)
-  for svg in svgs:
-    print(f'{str(svg[0]):<{name_len}} @ {svg[1]:>{width_len}} x {svg[2]:>{height_len}}')
+  name_len = max(len(name) for (name, _, _) in data)
+  width_len = max(len(width) for (_, width, _) in data)
+  height_len = max(len(height) for (_, _, height) in data)
+  for (name, width, height) in data:
+    print(f'{name:<{name_len}} @ {width:>{width_len}} x {height:>{height_len}}')
 
 
 if __name__ == '__main__':

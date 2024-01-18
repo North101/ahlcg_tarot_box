@@ -1,6 +1,7 @@
 import pathlib
 
-from .svg import *
+from pysvg import circle, g, length, path, svg, transforms
+
 from .shared import *
 
 
@@ -8,76 +9,70 @@ from .shared import *
 def write_svg(args: SVGArgs):
   half_circle = args.finger_cutout / 2
 
-  top_path = d([
-      d.h(args.thickness),
-      args.h_tab_half,
-      args.h_tab_in,
-      args.h_tab_in,
-      placeholder(lambda w, h: d.h((args.tray_width - w) / 2)),
-      args.h_tab_in,
-      args.h_tab_in,
-      args.h_tab_half,
-      d.v(args.thickness),
-      d.c(0, half_circle, half_circle, half_circle, half_circle, half_circle),
-      d.c(0, 0, half_circle, 0, half_circle, -half_circle),
-      -d.v(args.thickness),
-      args.h_tab_half,
-      args.h_tab_in,
-      args.h_tab_in,
-      placeholder(lambda w, h: d.h((args.tray_width - w) / 2)),
-      args.h_tab_in,
-      args.h_tab_in,
-      args.h_tab_half,
-      d.h(args.thickness),
+  top_path = path.d([
+      path.d.h(args.thickness),
+      args.h_tab_half(args.tab),
+      args.h_tab(args.tab, False),
+      args.h_tab(args.tab, False),
+      path.placeholder(lambda w, h: path.d.h((args.tray_width - w) / 2)),
+      args.h_tab(args.tab, False),
+      args.h_tab(args.tab, False),
+      args.h_tab_half(args.tab),
+      path.d.v(args.thickness),
+      path.d.c(0, half_circle, half_circle, half_circle, half_circle, half_circle),
+      path.d.c(0, 0, half_circle, 0, half_circle, -half_circle),
+      -path.d.v(args.thickness),
+      args.h_tab_half(args.tab),
+      args.h_tab(args.tab, False),
+      args.h_tab(args.tab, False),
+      path.placeholder(lambda w, h: path.d.h((args.tray_width - w) / 2)),
+      args.h_tab(args.tab, False),
+      args.h_tab(args.tab, False),
+      args.h_tab_half(args.tab),
+      path.d.h(args.thickness),
   ])
 
-  right_path = d([
-      d.v(args.thickness),
-      args.v_tab_half,
-      args.v_tab_in,
-      args.v_tab_in,
-      placeholder(lambda w, h: d.v((args.tray_height - h) / 2)),
-      args.v_tab_in,
-      placeholder(lambda w, h: d.v((args.tray_height - h) / 2)),
-      args.v_tab_in,
-      args.v_tab_in,
-      args.v_tab_half,
-      d.v(args.thickness),
+  right_path = path.d([
+      path.d.v(args.thickness),
+      args.v_tab_half(args.tab),
+      args.v_tab(args.tab, False),
+      args.v_tab(args.tab, False),
+      path.placeholder(lambda w, h: path.d.v((args.tray_height - h) / 2)),
+      args.v_tab(args.tab, False),
+      path.placeholder(lambda w, h: path.d.v((args.tray_height - h) / 2)),
+      args.v_tab(args.tab, False),
+      args.v_tab(args.tab, False),
+      args.v_tab_half(args.tab),
+      path.d.v(args.thickness),
   ])
 
   bottom_path = -top_path
 
   left_path = -right_path
 
-  p = d([
-      d.m(0, 0),
+  d = path.d([
+      path.d.m(0, 0),
       top_path,
       right_path,
       bottom_path,
       left_path,
-      d.z(),
+      path.d.z(),
   ])
 
   s = svg(
       attrs=svg.attrs(
-          width=length(round(p.width, 2), 'mm'),
-          height=length(round(p.height, 2), 'mm'),
-          viewBox=(0, 0, round(p.width, 2), round(p.height, 2)),
+          width=length(round(d.width, 2), 'mm'),
+          height=length(round(d.height, 2), 'mm'),
+          viewBox=(0, 0, round(d.width, 2), round(d.height, 2)),
       ),
       children=[
           path(attrs=path.attrs(
-              d=p,
-              fill='none',
-              stroke='black',
-              stroke_width=0.001,
-          )),
+              d=d,
+          ) | args.cut),
           g(
               attrs=g.attrs(
-                  transform=transform.translate(args.thickness, args.thickness),
-                  fill='none',
-                  stroke='black',
-                  stroke_width=0.001,
-              ),
+                  transform=transforms.translate(args.thickness, args.thickness),
+              ) | args.cut,
               children=[
                   circle(attrs=circle.attrs(
                       cx=round(args.width / 4, 2),
@@ -110,20 +105,17 @@ def write_svg(args: SVGArgs):
                       r=args.magnet.r - args.kerf,
                   )),
                   g(
-                      attrs=g.attrs(transform=transform.translate(
-                          round((args.width - (args.tray_icon.width * args.tray_icon.scale)) / 2, 2),
-                          round((args.height - (args.tray_icon.height * args.tray_icon.scale)) / 2, 2),
+                      attrs=g.attrs(transform=transforms.translate(
+                          x=round((args.width - (args.tray_icon.width * args.tray_icon.scale)) / 2, 2),
+                          y=round((args.height - (args.tray_icon.height * args.tray_icon.scale)) / 2, 2),
                       )),
                       children=[
                           g(
                               attrs=g.attrs(
-                                  transform=transform.scale(args.tray_icon.scale),
-                                  fill='black',
-                                  stroke='none',
-                                  stroke_width=0.001,
-                              ),
+                                  transform=transforms.scale(args.tray_icon.scale),
+                              ) | args.engrave,
                               children=[
-                                  pathlib.Path(args.tray_icon.path).read_text().strip(),
+                                  args.tray_icon.path.read_text().strip(),
                               ],
                           ),
                       ],
@@ -134,7 +126,4 @@ def write_svg(args: SVGArgs):
   )
 
   filename = args.output / pathlib.Path(__file__).with_suffix('.svg').name
-  with filename.open('w') as f:
-    f.write(str(s))
-
-  return filename, p.width, p.height
+  return filename, s

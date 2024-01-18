@@ -20,9 +20,26 @@ Instead I've created a script where you can adjust the different variables to su
 Download [this repo](https://codeload.github.com/North101/ahlcg_tarot_box/zip/refs/heads/main) and unzip it
 
 
+```bash
+# setup python virtual env
+python3 -m venv .venv
+
+# activate virtual env
+source .venv/bin/activate
+
+# install required libs
+python3 -m pip install -r requirements.txt
+```
+
+
 ### Running
 
-To generate the files with the default arguments:
+Activate python virtual env (if not already done)
+```bash
+source .venv/bin/activate
+```
+
+Generate the files with the default arguments:
 ```bash
 python3 -m ahlcg_tarot_box
 ```

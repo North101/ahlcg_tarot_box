@@ -1,7 +1,8 @@
-from typing import NamedTuple, Protocol
+import math
 import pathlib
+from typing import NamedTuple, Protocol
 
-from .svg.elements.path import *
+from pysvg import PresentationAttributes, path, svg
 
 
 class IconArgs(NamedTuple):
@@ -54,57 +55,65 @@ class SVGArgs(NamedTuple):
   def sleeve_depth(self):
     return self.tray_depth + (self.thickness * 2) + (self.gap * 2)
 
-  @property
-  def h_tab_half(self):
-    return d.h(self.tab / 2)
+  def h_tab_half(self, tab):
+    return path.d.h(tab / 2)
 
-  @property
-  def h_tab_in(self):
-    return d([
-        d.h((self.tab / 2) + self.kerf),
-        d.v(self.thickness),
-        d.h(self.tab + -self.kerf + -self.kerf),
-        -d.v(self.thickness),
-        d.h(self.kerf + (self.tab / 2)),
+  def h_tab(self, tab: float, out: bool):
+    kerf = -self.kerf if out else self.kerf
+    thickness = -path.d.v(self.thickness) if out else path.d.v(self.thickness)
+    return path.d([
+        path.d.h((tab / 2) + kerf),
+        thickness,
+        path.d.h(tab + -kerf + -kerf),
+        -thickness,
+        path.d.h(kerf + (tab / 2)),
     ])
 
-  @property
-  def h_tab_out(self):
-    return d([
-        d.h((self.tab / 2) + -self.kerf),
-        -d.v(self.thickness),
-        d.h(self.kerf + self.tab + self.kerf),
-        d.v(self.thickness),
-        d.h((self.tab / 2) + -self.kerf),
+  def h_tabs(self, tab: float, width: float, out: bool):
+    h_tab = self.h_tab(tab, out)
+    count = math.floor(width / h_tab.width)
+    return path.d([
+        h_tab
+        for _ in range(count)
     ])
 
-  @property
-  def v_tab_half(self):
-    return d.v(self.tab / 2)
+  def v_tab_half(self, tab):
+    return path.d.v(tab / 2)
 
-  @property
-  def v_tab_in(self):
-    return d([
-        d.v((self.tab / 2) + self.kerf),
-        -d.h(self.thickness),
-        d.v(self.tab + -self.kerf + -self.kerf),
-        d.h(self.thickness),
-        d.v(self.kerf + (self.tab / 2)),
+  def v_tab(self, tab: float, out: bool):
+    kerf = -self.kerf if out else self.kerf
+    thickness = -path.d.h(self.thickness) if out else path.d.h(self.thickness)
+    return path.d([
+        path.d.v((tab / 2) + kerf),
+        -thickness,
+        path.d.v(tab + -kerf + -kerf),
+        thickness,
+        path.d.v(kerf + (tab / 2)),
     ])
 
-  @property
-  def v_tab_out(self):
-    return d([
-        d.v((self.tab / 2) + -self.kerf),
-        d.h(self.thickness),
-        d.v(self.kerf + self.tab + self.kerf),
-        -d.h(self.thickness),
-        d.v((self.tab / 2) + -self.kerf),
+  def v_tabs(self, tab: float, height: float, out: bool):
+    v_tab = self.v_tab(tab, out)
+    count = math.floor(height / v_tab.height)
+    return path.d([
+        v_tab
+        for _ in range(count)
     ])
+
+  cut = PresentationAttributes(
+      fill='none',
+      stroke='black',
+      stroke_width=0.001,
+  )
+
+  engrave = PresentationAttributes(
+      fill='black',
+      stroke='none',
+      stroke_width=0.001,
+  )
 
 
 class RegisterSVGCallable(Protocol):
-  def __call__(self, args: SVGArgs) -> tuple[pathlib.Path, float, float]:
+  def __call__(self, args: SVGArgs) -> tuple[pathlib.Path, svg]:
     ...
 
 
@@ -117,7 +126,12 @@ def register_svg(f: RegisterSVGCallable):
 
 
 def write_all_svg(args: SVGArgs):
-  return [
+  args.output.mkdir(parents=True, exist_ok=True)
+  data = [
       write_svg(args)
       for write_svg in svg_list
   ]
+  for (filename, svg_data) in data:
+    filename.write_text(str(svg_data))
+
+  return data

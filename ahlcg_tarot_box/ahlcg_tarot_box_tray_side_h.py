@@ -1,58 +1,53 @@
 import pathlib
 
-from .svg import *
+from pysvg import length, path, svg
+
 from .shared import *
 
 
 @register_svg
 def write_svg(args: SVGArgs):
-  top_path = d([
-      placeholder(lambda w, h: d.h((args.tray_depth - args.thickness - w) / 2)),
-      args.h_tab_out,
-      placeholder(lambda w, h: d.h((args.tray_depth - args.thickness - w) / 2)),
+  top_path = path.d([
+      path.placeholder(lambda w, h: path.d.h((args.tray_depth - args.thickness - w) / 2)),
+      args.h_tab(args.tab, True),
+      path.placeholder(lambda w, h: path.d.h((args.tray_depth - args.thickness - w) / 2)),
   ])
 
-  right_path = d([
-      args.v_tab_half,
-      args.v_tab_out,
-      args.v_tab_out,
-      placeholder(lambda w, h: d.v((args.height - h) / 2)),
-      args.v_tab_out,
-      placeholder(lambda w, h: d.v((args.height - h) / 2)),
-      args.v_tab_out,
-      args.v_tab_out,
-      args.v_tab_half,
+  right_path = path.d([
+      args.v_tab_half(args.tab),
+      args.v_tab(args.tab, True),
+      args.v_tab(args.tab, True),
+      path.placeholder(lambda w, h: path.d.v((args.height - h) / 2)),
+      args.v_tab(args.tab, True),
+      path.placeholder(lambda w, h: path.d.v((args.height - h) / 2)),
+      args.v_tab(args.tab, True),
+      args.v_tab(args.tab, True),
+      args.v_tab_half(args.tab),
   ])
 
-  left_path = -d.v(args.tray_height - (args.thickness * 2))
+  left_path = -path.d.v(args.tray_height - (args.thickness * 2))
 
-  p = d([
-      d.m(0, args.thickness),
+  d = path.d([
+      path.d.m(0, args.thickness),
       top_path,
       right_path,
       -top_path,
       left_path,
-      d.z(),
+      path.d.z(),
   ])
 
   s = svg(
       attrs=svg.attrs(
-          width=length(round(p.width, 2), 'mm'),
-          height=length(round(p.height, 2), 'mm'),
-          viewBox=(0, 0, round(p.width, 2), round(p.height, 2)),
+          width=length(round(d.width, 2), 'mm'),
+          height=length(round(d.height, 2), 'mm'),
+          viewBox=(0, 0, round(d.width, 2), round(d.height, 2)),
       ),
       children=[
           path(attrs=path.attrs(
-              d=p,
-              fill='none',
-              stroke='black',
-              stroke_width=0.001,
-          )),
+              d=d,
+          ) | args.cut),
       ]
   )
 
   filename = args.output / pathlib.Path(__file__).with_suffix('.svg').name
-  with filename.open('w') as f:
-    f.write(str(s))
-
-  return filename, p.width, p.height
+  return filename, s
